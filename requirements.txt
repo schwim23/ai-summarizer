@@ -1,0 +1,11 @@
+gradio
+openai
+faiss-cpu
+pydub
+python-docx
+PyPDF2
+yt_dlp
+tiktoken
+boto3
+pytube
+
