@@ -1,123 +1,124 @@
-
 # 🧠 MyAIGist — AI-Powered Summarization & Q&A Assistant
 
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![OpenAI](https://img.shields.io/badge/OpenAI-GPT--4-success)
 ![Gradio](https://img.shields.io/badge/Gradio-UI-orange)
-![AWS Ready](https://img.shields.io/badge/AWS%20Ready-yes-yellow)
+![Docker](https://img.shields.io/badge/Docker-Containerized-blue)
 
-**MyAIGist** is an AI-powered tool that lets users upload text, audio, video, or YouTube links and receive a 1–2 minute digestible summary with optional audio playback. Users can also ask follow-up questions about the content via conversational Q&A (RAG). The app uses OpenAI models and provides a simple Gradio-based UI.
-
----
-
-## 📸 Screenshot
-
-![MyAIGist Screenshot](https://via.placeholder.com/800x400.png?text=MyAIGist+UI+Screenshot+Placeholder)
+**MyAIGist** is an AI-powered tool that lets users upload text, audio, video, or YouTube links and receive a 1–2 minute digestible summary with optional audio playback. Users can also ask follow-up questions via RAG-based conversational Q&A. Built with OpenAI, Gradio, yt-dlp, and FAISS.
 
 ---
 
 ## 🚀 Features
 
-- 🔹 Upload or link to:
-  - PDF, DOCX, TXT files
-  - YouTube videos
+- 📁 Upload:
+  - PDFs, DOCX, TXT
+  - YouTube video links
   - Audio/Video files (.mp3, .mp4)
-- 🧠 Receive GPT-based summary (custom prompt-tuned)
-- 🔊 Play summaries and Q&A responses via OpenAI TTS
-- ❓ Ask follow-up questions in a chat-style format
-- 🎛️ Choose model for summarization or Q&A
-- 📨 (Coming soon) Send content via email and receive a summary
+  - Raw text via input box
+- 🧠 GPT-powered summarization
+- 🔊 Text-to-speech audio playback
+- ❓ Q&A over uploaded/transcribed content
+- 🧠 FAISS-based RAG context retrieval
+- 🎛️ Choose between OpenAI models (e.g., GPT-4, GPT-3.5)
+- 📨 (Coming soon) Email input support (SES + S3 + Lambda)
 
 ---
 
-## 🖥️ Local Development
+## 🐳 Local Docker Deployment
 
-### 1. Clone the Repo
+### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/your-username/ai-summarizer.git
+git clone https://github.com/schwim23/ai-summarizer.git
 cd ai-summarizer
 ```
 
-### 2. Install Dependencies
+### 2. Create a `.env` File
+
+Inside the root directory:
+
+```bash
+touch .env
+```
+
+Paste the following into `.env` (replace with your key):
+
+```env
+OPENAI_API_KEY=sk-xxx...
+```
+
+### 3. Run with Docker Compose
+
+```bash
+docker-compose up --build
+```
+
+Gradio will launch at: [http://localhost:7860](http://localhost:7860)
+
+### 4. (Optional) Mount Local Drive for Fast Iteration
+
+If you want to mount local changes into the container:
+
+```bash
+docker-compose -f docker-compose.dev.yml up --build
+```
+
+(Ensure `docker-compose.dev.yml` maps your `./app` folder with a volume.)
+
+---
+
+## 🧪 Development (No Docker)
+
+### 1. Install Requirements
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 3. Set Your OpenAI API Key
+### 2. Set Environment Variable
 
 ```bash
-export OPENAI_API_KEY=your-openai-api-key
+export OPENAI_API_KEY=sk-xxx...
 ```
 
-### 4. Run the App
+### 3. Run the App
 
 ```bash
 python main.py
 ```
 
-Then visit: [http://localhost:7860](http://localhost:7860)
-
 ---
 
-## 🔧 CI/CD (Optional)
+## 🛠 Tech Stack
 
-Set up GitHub Actions for automatic deployment (e.g., to AWS or container registry):
-
-```yaml
-# .github/workflows/deploy.yml
-name: Deploy App
-
-on:
-  push:
-    branches: [main]
-
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.10'
-      - name: Install dependencies
-        run: |
-          pip install -r requirements.txt
-      - name: Run tests or deploy
-        run: |
-          echo "Add your deployment command here"
-```
-
----
-
-## 🛠 Architecture
-
-- **Frontend**: Gradio UI
-- **AI Backend**: OpenAI GPT-4 / GPT-3.5-turbo for summaries + Q&A
-- **TTS**: OpenAI Text-to-Speech (TTS-1)
-- **Multimedia Processing**: Pytube, ffmpeg, moviepy
-- **Planned Integration**: AWS SES + S3 + Lambda for email input
+| Layer        | Tool                        |
+|--------------|-----------------------------|
+| UI           | Gradio                      |
+| AI API       | OpenAI (Chat, TTS, Embeds)  |
+| Audio/Video  | yt-dlp + ffmpeg             |
+| RAG Search   | FAISS + tiktoken            |
+| File Parsing | PyPDF2, python-docx         |
 
 ---
 
 ## 📦 Coming Soon
 
-- ✅ Summarization via email (SES + Lambda)
-- 🌍 Deployment via AWS (App Runner or Lambda + API Gateway)
-- 🧠 Session memory & chat history
-- 🧾 Summary + Q&A export as file or email
+- ✅ Email-to-summary via AWS SES
+- 💬 Session memory and chat history
+- ☁️ One-click AWS deployment
+- 📤 Export summaries + Q&A
+- 🔒 User authentication & dashboard
 
 ---
 
 ## 📝 License
 
-MIT License © 2025 [Your Name]
+MIT License © 2025 Michael Schwimmer
 
 ---
 
 ## 🙋‍♂️ Contact
 
-Have ideas, feedback, or want to contribute? Open an issue or reach out on GitHub.
+Have ideas or issues? Open an issue or pull request at [github.com/schwim23/ai-summarizer](https://github.com/schwim23/ai-summarizer)

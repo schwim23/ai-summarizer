@@ -1,4 +1,4 @@
-gradio
+gradio>=4.28.0
 openai
 faiss-cpu
 pydub
@@ -8,4 +8,4 @@ yt_dlp
 tiktoken
 boto3
 pytube
-
+yt-dlp>=2024.1
