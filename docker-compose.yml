@@ -1,0 +1,13 @@
+services:
+  ai-summarizer:
+    build:
+      context: .
+    ports:
+      - "7860:7860"
+    volumes:
+      - .:/app          # Mount current directory into /app inside the container
+    env_file:
+      - .env
+    environment:
+      - PYTHONUNBUFFERED=1
+    command: python main.py
