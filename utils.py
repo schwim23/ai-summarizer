@@ -415,31 +415,6 @@ def handle_input(youtube_url, uploaded_file, video_audio_file, raw_text_input, s
         return f"Error processing content: {str(e)}", None, "", ""
 
 def enhanced_answer_question(question_text, audio_path, model_name):
-    """Enhanced Q&A with RAG retrieval and source attribution"""
-    
-    # Debug: Print what we received
-    print(f"DEBUG - question_text: '{question_text}' (type: {type(question_text)})")
-    print(f"DEBUG - audio_path: '{audio_path}' (type: {type(audio_path)})")
-    
-    # Handle different input scenarios
-    actual_question = ""
-    
-    # Priority logic: if there's audio input, always use it (new question)
-    # If no audio, then use text input
-    if audio_path and audio_path is not None:
-        print("DEBUG - Audio provided, transcribing...")
-        actual_question = transcribe_audio(audio_path)
-        print(f"DEBUG - Transcribed question: '{actual_question}'")
-    elif question_text and str(question_text).strip():
-        actual_question = str(question_text).strip()
-        print(f"DEBUG - Using text question: '{actual_question}'")
-    
-    # Check if we have a valid question
-    if not actual_question:
-        print("DEBUG - No valid question found")
-        return "No question provided.", "Please ask something about your uploaded content.", None
-    
-def enhanced_answer_question(question_text, audio_path, model_name):
     """Enhanced Q&A with Smart Question Agent and RAG retrieval"""
     
     # Debug: Print what we received
