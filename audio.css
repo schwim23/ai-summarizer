@@ -1,0 +1,207 @@
+/* Audio Components Styling */
+
+/* Main audio player styling */
+audio {
+    width: 100% !important;
+    margin-top: 2rem !important;
+    border-radius: 12px !important;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.4) !important;
+    background: rgba(30,30,60,0.8) !important;
+}
+
+/* Audio Recording Component - FIX FOR BROKEN STYLING */
+.gr-audio,
+.gradio-audio,
+.audio-container {
+    background: linear-gradient(135deg, rgba(20,20,40,0.9) 0%, rgba(30,30,60,0.9) 100%) !important;
+    border: 2px solid rgba(99, 102, 241, 0.4) !important;
+    border-radius: 16px !important;
+    padding: 1.5rem !important;
+    color: #ffffff !important;
+}
+
+/* Voice recording modal and components */
+.gr-audio .gr-button,
+.gradio-audio .gr-button,
+.audio-container .gr-button {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%) !important;
+    border: none !important;
+    border-radius: 12px !important;
+    color: #ffffff !important;
+    font-weight: 600 !important;
+    padding: 12px 24px !important;
+    transition: all 0.3s ease !important;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3) !important;
+}
+
+.gr-audio .gr-button:hover,
+.gradio-audio .gr-button:hover,
+.audio-container .gr-button:hover {
+    background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4) !important;
+}
+
+/* Recording indicator */
+.gr-audio .recording,
+.gradio-audio .recording {
+    background: linear-gradient(135deg, #ef4444 0%, #f97316 100%) !important;
+    color: #ffffff !important;
+    border-radius: 12px !important;
+    padding: 8px 16px !important;
+    font-weight: 600 !important;
+    animation: pulse-recording 1.5s ease-in-out infinite !important;
+}
+
+@keyframes pulse-recording {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.7; transform: scale(1.05); }
+}
+
+/* Audio waveform and controls */
+.gr-audio canvas,
+.gradio-audio canvas {
+    background: rgba(30,30,60,0.8) !important;
+    border-radius: 8px !important;
+    border: 1px solid rgba(99, 102, 241, 0.3) !important;
+}
+
+/* Audio upload area */
+.gr-audio .gr-file,
+.gradio-audio .gr-file {
+    background: linear-gradient(135deg, rgba(20,20,40,0.9) 0%, rgba(30,30,60,0.9) 100%) !important;
+    border: 2px dashed rgba(99, 102, 241, 0.5) !important;
+    border-radius: 12px !important;
+    padding: 2rem !important;
+    text-align: center !important;
+    color: rgba(255,255,255,0.8) !important;
+    transition: all 0.3s ease !important;
+}
+
+.gr-audio .gr-file:hover,
+.gradio-audio .gr-file:hover {
+    border-color: #6366f1 !important;
+    background: linear-gradient(135deg, rgba(25,25,45,0.95) 0%, rgba(35,35,65,0.95) 100%) !important;
+    color: #ffffff !important;
+}
+
+/* Audio playback controls */
+.gr-audio .controls,
+.gradio-audio .controls {
+    background: rgba(30,30,60,0.9) !important;
+    border-radius: 8px !important;
+    padding: 0.5rem !important;
+    margin-top: 0.5rem !important;
+}
+
+.gr-audio .controls button,
+.gradio-audio .controls button {
+    background: rgba(99, 102, 241, 0.8) !important;
+    border: none !important;
+    border-radius: 6px !important;
+    color: #ffffff !important;
+    padding: 8px 12px !important;
+    margin: 0 4px !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+}
+
+.gr-audio .controls button:hover,
+.gradio-audio .controls button:hover {
+    background: rgba(99, 102, 241, 1) !important;
+    transform: scale(1.05) !important;
+}
+
+/* Fix for voice question modal */
+.gr-audio .label,
+.gradio-audio .label,
+.gr-audio .gr-label,
+.gradio-audio .gr-label {
+    color: #ffffff !important;
+    font-weight: 600 !important;
+    font-size: 1rem !important;
+    margin-bottom: 1rem !important;
+    text-shadow: none !important;
+}
+
+/* Audio time display */
+.gr-audio .time,
+.gradio-audio .time {
+    color: rgba(255,255,255,0.9) !important;
+    font-family: monospace !important;
+    font-size: 0.9rem !important;
+    background: rgba(30,30,60,0.8) !important;
+    padding: 4px 8px !important;
+    border-radius: 4px !important;
+}
+
+/* Modal overlay for recording */
+.gr-audio .modal,
+.gradio-audio .modal {
+    background: rgba(15,15,35,0.95) !important;
+    backdrop-filter: blur(10px) !important;
+}
+
+.gr-audio .modal-content,
+.gradio-audio .modal-content {
+    background: linear-gradient(135deg, rgba(30,30,60,0.95) 0%, rgba(40,40,80,0.95) 100%) !important;
+    border: 1px solid rgba(99, 102, 241, 0.4) !important;
+    border-radius: 20px !important;
+    padding: 2rem !important;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6) !important;
+}
+
+/* Microphone icon styling */
+.gr-audio .microphone,
+.gradio-audio .microphone {
+    color: #6366f1 !important;
+    font-size: 1.5rem !important;
+}
+
+/* Fix text visibility in recording interface */
+.gr-audio *,
+.gradio-audio * {
+    color: #ffffff !important;
+}
+
+.gr-audio .gr-text,
+.gradio-audio .gr-text,
+.gr-audio span,
+.gradio-audio span,
+.gr-audio p,
+.gradio-audio p {
+    color: #ffffff !important;
+    text-shadow: none !important;
+}
+
+/* Recording status text */
+.gr-audio .status,
+.gradio-audio .status {
+    background: rgba(30,30,60,0.9) !important;
+    color: #ffffff !important;
+    padding: 8px 16px !important;
+    border-radius: 8px !important;
+    font-weight: 500 !important;
+    margin: 0.5rem 0 !important;
+}
+
+/* Upload button in audio component */
+.gr-audio .upload-button,
+.gradio-audio .upload-button {
+    background: linear-gradient(135deg, #059669 0%, #10b981 100%) !important;
+    border: none !important;
+    border-radius: 12px !important;
+    color: #ffffff !important;
+    font-weight: 600 !important;
+    padding: 12px 24px !important;
+    cursor: pointer !important;
+    transition: all 0.3s ease !important;
+    box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3) !important;
+}
+
+.gr-audio .upload-button:hover,
+.gradio-audio .upload-button:hover {
+    background: linear-gradient(135deg, #047857 0%, #059669 100%) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 20px rgba(5, 150, 105, 0.4) !important;
+}

@@ -1,0 +1,93 @@
+/* Enhanced dark theme with better contrast and modern colors */
+* {
+    box-sizing: border-box;
+}
+
+body, html {
+    background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 30%, #16213e 70%, #0f1419 100%) !important;
+    color: #ffffff !important;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Inter', sans-serif !important;
+    overflow-x: hidden;
+}
+
+.gradio-container {
+    max-width: 1200px !important;
+    margin: 0 auto !important;
+    background: transparent !important;
+    color: #ffffff !important;
+    min-height: 100vh !important;
+    padding: 0 20px !important;
+}
+
+.gradio-container .gr-form,
+.gradio-container .gr-box,
+.gradio-container .gr-panel,
+.gradio-container .gr-block,
+.gradio-container .gr-group {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+/* Hide Gradio elements */
+.footer {
+    display: none !important;
+}
+
+/* Enhanced scrollbar */
+::-webkit-scrollbar {
+    width: 14px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(30,30,60,0.8);
+    border-radius: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    border-radius: 8px;
+    border: 2px solid rgba(30,30,60,0.8);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+    .logo-text {
+        font-size: 2.4rem;
+    }
+    
+    .main-title {
+        font-size: 1.5rem;
+    }
+    
+    .tab-container {
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        max-width: 100%;
+        padding: 15px;
+    }
+    
+    .tab-button {
+        min-width: 220px !important;
+        padding: 16px 28px !important;
+    }
+    
+    .primary-button {
+        max-width: 100% !important;
+        padding: 20px 36px !important;
+        font-size: 1.2rem !important;
+    }
+    
+    .input-container, .settings-section, .output-section {
+        padding: 2rem !important;
+    }
+    
+    .main-textarea, .file-upload {
+        padding: 2rem !important;
+    }
+}

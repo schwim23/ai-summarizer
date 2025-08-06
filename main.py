@@ -1,549 +1,625 @@
 import gradio as gr
-from utils import handle_input, answer_question
+from utils import handle_input, answer_question, transcribe_audio, text_to_speech
+import time
+import os
 
 summary_model_choices = ["gpt-3.5-turbo", "gpt-4", "gpt-4o"]
 summary_depth_choices = ["Quick Overview", "Balanced Summary", "Deep Analysis"]
 
-# Custom CSS emphasizing Q&A functionality
-custom_css = """
-/* Main container styling */
-.gradio-container {
-    max-width: 1400px !important;
-    margin: 0 auto !important;
-    background: linear-gradient(135deg, #f8faff 0%, #f0f4ff 100%) !important;
-}
+# Load CSS files
+def load_css_files():
+    """Load all CSS files and combine them"""
+    css_files = [
+        "static/css/main.css",
+        "static/css/components.css", 
+        "static/css/forms.css",
+        "static/css/audio.css",
+        "static/css/animations.css"
+    ]
+    
+    combined_css = ""
+    
+    for css_file in css_files:
+        try:
+            with open(css_file, 'r', encoding='utf-8') as f:
+                combined_css += f.read() + "\n"
+        except FileNotFoundError:
+            print(f"Warning: CSS file {css_file} not found. Using inline fallback.")
+            # Fallback to inline CSS if files don't exist
+            combined_css += get_fallback_css()
+            break
+    
+    return combined_css
 
-/* Header styling - emphasizing Q&A */
-.header-container {
-    text-align: center;
-    padding: 2.5rem 0;
-    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-    border-radius: 20px;
-    margin-bottom: 2rem;
-    color: white;
-    position: relative;
-    overflow: hidden;
-}
-
-.header-container::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-    animation: pulse 4s ease-in-out infinite;
-}
-
-@keyframes pulse {
-    0%, 100% { transform: scale(1); opacity: 0.3; }
-    50% { transform: scale(1.1); opacity: 0.1; }
-}
-
-.logo-text {
-    font-size: 3rem;
-    font-weight: 800;
-    margin: 0;
-    letter-spacing: -0.02em;
-    position: relative;
-    z-index: 2;
-}
-
-.subtitle {
-    font-size: 1.3rem;
-    opacity: 0.95;
-    margin-top: 0.5rem;
-    font-weight: 500;
-    position: relative;
-    z-index: 2;
-}
-
-.tagline {
-    font-size: 1rem;
-    opacity: 0.8;
-    margin-top: 0.25rem;
-    font-style: italic;
-    position: relative;
-    z-index: 2;
-}
-
-/* Main workflow styling */
-.workflow-container {
-    display: flex;
-    gap: 1.5rem;
-    margin-bottom: 2rem;
-}
-
-.workflow-step {
-    flex: 1;
-    background: white;
-    border-radius: 16px;
-    padding: 1.5rem;
-    box-shadow: 0 4px 20px rgba(99, 102, 241, 0.1);
-    border: 2px solid transparent;
-    transition: all 0.3s ease;
-}
-
-.workflow-step:hover {
-    border-color: #6366f1;
-    transform: translateY(-2px);
-    box-shadow: 0 8px 30px rgba(99, 102, 241, 0.15);
-}
-
-.step-number {
-    width: 40px;
-    height: 40px;
-    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-weight: 700;
-    font-size: 1.2rem;
-    margin-bottom: 1rem;
-}
-
-.step-title {
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: #1e293b;
-    margin-bottom: 0.5rem;
-}
-
-.step-description {
-    color: #64748b;
-    font-size: 0.9rem;
-    line-height: 1.4;
-}
-
-/* Input section styling */
-.input-section {
-    background: white;
-    border-radius: 16px;
-    padding: 2rem;
-    box-shadow: 0 4px 20px rgba(99, 102, 241, 0.1);
-    margin-bottom: 1.5rem;
-    border: 1px solid #e2e8f0;
-}
-
-.section-title {
-    font-size: 1.4rem;
-    font-weight: 700;
-    color: #1e293b;
-    margin-bottom: 1.5rem;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 2px solid #f1f5f9;
-}
-
-/* Q&A emphasis styling */
-.qa-highlight {
-    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-    color: white;
-    padding: 1.5rem;
-    border-radius: 16px;
-    margin-bottom: 1.5rem;
-    text-align: center;
-}
-
-.qa-title {
-    font-size: 1.8rem;
-    font-weight: 700;
-    margin-bottom: 0.5rem;
-}
-
-.qa-subtitle {
-    font-size: 1rem;
-    opacity: 0.9;
-}
-
-/* Button styling */
-.primary-button {
-    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%) !important;
-    border: none !important;
-    border-radius: 12px !important;
-    color: white !important;
-    font-weight: 600 !important;
-    padding: 1rem 2.5rem !important;
-    font-size: 1.1rem !important;
-    transition: all 0.3s ease !important;
-    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3) !important;
-    width: 100% !important;
-}
-
-.primary-button:hover {
-    transform: translateY(-3px) !important;
-    box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4) !important;
-}
-
-.secondary-button {
-    background: white !important;
-    border: 2px solid #6366f1 !important;
-    border-radius: 12px !important;
-    color: #6366f1 !important;
-    font-weight: 600 !important;
-    padding: 0.75rem 2rem !important;
-    font-size: 1rem !important;
-    transition: all 0.3s ease !important;
-}
-
-.secondary-button:hover {
-    background: #6366f1 !important;
-    color: white !important;
-    transform: translateY(-2px) !important;
-}
-
-/* Output styling */
-.output-section {
-    background: white;
-    border-radius: 16px;
-    padding: 2rem;
-    box-shadow: 0 4px 20px rgba(99, 102, 241, 0.1);
-    margin-bottom: 1.5rem;
-    border: 1px solid #e2e8f0;
-}
-
-.summary-card {
-    background: linear-gradient(135deg, #f8faff 0%, #f0f4ff 100%);
-    border: 2px solid #e0e7ff;
-    border-radius: 12px;
-    padding: 1.5rem;
-    margin-bottom: 1rem;
-}
-
-.answer-card {
-    background: linear-gradient(135deg, #fefce8 0%, #fef3c7 100%);
-    border: 2px solid #fde047;
-    border-radius: 12px;
-    padding: 1.5rem;
-    margin-bottom: 1rem;
-}
-
-/* Form field styling */
-.gradio-textbox, .gradio-dropdown, .gradio-file {
-    border-radius: 12px !important;
-    border: 2px solid #e2e8f0 !important;
-    transition: all 0.3s ease !important;
-    font-size: 1rem !important;
-}
-
-.gradio-textbox:focus, .gradio-dropdown:focus {
-    border-color: #6366f1 !important;
-    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1) !important;
-    transform: translateY(-1px) !important;
-}
-
-/* Audio player styling */
-audio {
-    border-radius: 12px !important;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1) !important;
-    width: 100% !important;
-}
-
-/* Status indicators */
-.status-indicator {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 1rem;
-    border-radius: 8px;
-    font-size: 0.9rem;
-    font-weight: 500;
-    margin-bottom: 1rem;
-}
-
-.status-ready {
-    background: #dcfce7;
-    color: #166534;
-    border: 1px solid #bbf7d0;
-}
-
-.status-processing {
-    background: #fef3c7;
-    color: #92400e;
-    border: 1px solid #fde047;
-}
-
-/* Mobile responsiveness */
-@media (max-width: 1024px) {
-    .workflow-container {
-        flex-direction: column;
-        gap: 1rem;
+def get_fallback_css():
+    """Fallback CSS in case external files aren't available"""
+    return """
+    /* Fallback CSS - Essential styling */
+    body, html {
+        background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 30%, #16213e 70%, #0f1419 100%) !important;
+        color: #ffffff !important;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Inter', sans-serif !important;
     }
     
     .gradio-container {
-        max-width: 95% !important;
-    }
-}
-
-@media (max-width: 768px) {
-    .logo-text {
-        font-size: 2.2rem;
+        max-width: 1200px !important;
+        margin: 0 auto !important;
+        background: transparent !important;
+        color: #ffffff !important;
+        padding: 0 20px !important;
     }
     
-    .subtitle {
-        font-size: 1.1rem;
+    /* Audio Recording Component - FIXED STYLING */
+    .gr-audio,
+    .gradio-audio,
+    .audio-container {
+        background: linear-gradient(135deg, rgba(20,20,40,0.9) 0%, rgba(30,30,60,0.9) 100%) !important;
+        border: 2px solid rgba(99, 102, 241, 0.4) !important;
+        border-radius: 16px !important;
+        padding: 1.5rem !important;
+        color: #ffffff !important;
     }
     
-    .input-section, .output-section {
-        padding: 1.5rem;
-        margin-bottom: 1rem;
+    .gr-audio *,
+    .gradio-audio *,
+    .gr-audio .gr-text,
+    .gradio-audio .gr-text,
+    .gr-audio span,
+    .gradio-audio span,
+    .gr-audio p,
+    .gradio-audio p,
+    .gr-audio .label,
+    .gradio-audio .label,
+    .gr-audio .gr-label,
+    .gradio-audio .gr-label {
+        color: #ffffff !important;
+        text-shadow: none !important;
     }
     
-    .workflow-step {
-        padding: 1rem;
+    .gr-audio .gr-button,
+    .gradio-audio .gr-button {
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%) !important;
+        border: none !important;
+        border-radius: 12px !important;
+        color: #ffffff !important;
+        font-weight: 600 !important;
+        padding: 12px 24px !important;
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3) !important;
     }
-}
-
-/* Hide Gradio footer */
-.footer {
-    display: none !important;
-}
-
-/* Custom scrollbar */
-::-webkit-scrollbar {
-    width: 8px;
-}
-
-::-webkit-scrollbar-track {
-    background: #f1f5f9;
-    border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb {
-    background: #6366f1;
-    border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-    background: #4f46e5;
-}
-"""
-
-with gr.Blocks(title="MyAIGist - AI-Powered Q&A Assistant", css=custom_css, theme=gr.themes.Soft()) as demo:
     
-    # Enhanced Header with Q&A emphasis
+    .brand-header {
+        text-align: center;
+        padding: 3rem 0 2rem 0;
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 25%, #a855f7 50%, #d946ef 75%, #ec4899 100%);
+        margin: -20px -20px 2rem -20px;
+        border-radius: 0 0 24px 24px;
+        box-shadow: 0 20px 40px rgba(99, 102, 241, 0.4);
+    }
+    
+    .input-container, .settings-section, .output-section {
+        background: linear-gradient(135deg, rgba(30,30,60,0.9) 0%, rgba(40,40,80,0.8) 100%) !important;
+        border: 1px solid rgba(99, 102, 241, 0.4) !important;
+        border-radius: 24px !important;
+        padding: 3rem !important;
+        margin-bottom: 2rem !important;
+        box-shadow: 0 12px 40px rgba(0,0,0,0.4) !important;
+    }
+    
+    .primary-button {
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%) !important;
+        border: none !important;
+        border-radius: 18px !important;
+        color: white !important;
+        font-weight: 700 !important;
+        padding: 22px 55px !important;
+        font-size: 1.35rem !important;
+        width: 100% !important;
+        max-width: 380px !important;
+        margin: 3rem auto !important;
+        display: block !important;
+        cursor: pointer !important;
+        text-transform: uppercase !important;
+        letter-spacing: 1.2px !important;
+    }
+    """
+
+# Create CSS directories if they don't exist
+def ensure_css_directories():
+    """Ensure CSS directory structure exists"""
+    css_dir = "static/css"
+    os.makedirs(css_dir, exist_ok=True)
+
+# Initialize CSS
+ensure_css_directories()
+custom_css = load_css_files()
+
+with gr.Blocks(title="MyAIGist - AI-Powered Q&A Assistant", css=custom_css, theme=gr.themes.Base()) as demo:
+    
+    # State to track if content has been processed
+    content_processed = gr.State(False)
+    
+    # Brand Header with Logo
     with gr.Row():
         gr.HTML("""
-            <div class="header-container">
-                <h1 class="logo-text">🧠 MYAIGIST</h1>
-                <p class="subtitle">AI-Powered Q&A Assistant</p>
-                <p class="tagline">Get answers from your content with the help of AI</p>
+            <div class="brand-header">
+                <div class="logo-container">
+                    <div class="logo-icon">🧠</div>
+                    <div class="logo-text">MYAIGIST</div>
+                </div>
+                <h1 class="main-title">AI-Powered Content Analysis & Q&A</h1>
+                <p class="subtitle">Upload documents, analyze content, and get intelligent answers</p>
             </div>
         """)
     
-    # Workflow visualization
+    # Three horizontal tabs
     with gr.Row():
-        gr.HTML("""
-            <div class="workflow-container">
-                <div class="workflow-step">
-                    <div class="step-number">1</div>
-                    <div class="step-title">📁 Upload Content</div>
-                    <div class="step-description">Upload documents, paste text, or share YouTube links</div>
-                </div>
-                <div class="workflow-step">
-                    <div class="step-number">2</div>
-                    <div class="step-title">⚡ AI Processing</div>
-                    <div class="step-description">AI analyzes and creates searchable knowledge base</div>
-                </div>
-                <div class="workflow-step">
-                    <div class="step-number">3</div>
-                    <div class="step-title">💬 Ask Questions</div>
-                    <div class="step-description">Get instant answers with audio playback</div>
-                </div>
-            </div>
-        """)
+        with gr.Column():
+            with gr.Group(elem_classes=["tab-container"]):
+                with gr.Row():
+                    tab_document_btn = gr.Button("📄 Upload text file", elem_classes=["tab-button"])
+                    tab_audio_btn = gr.Button("🎵 Upload audio/video", elem_classes=["tab-button"]) 
+                    tab_text_btn = gr.Button("✍️ Enter text", elem_classes=["tab-button", "selected"])
     
-    # Content Upload Section
-    with gr.Group():
-        with gr.Row():
-            gr.HTML('<div class="section-title">📥 Upload Your Content</div>')
-        
-        with gr.Row():
-            with gr.Column(scale=1):
-                youtube_url = gr.Textbox(
-                    label="🎥 YouTube URL - Paste any YouTube video URL for AI transcription", 
-                    placeholder="https://www.youtube.com/watch?v=...",
-                    lines=1
-                )
-                raw_text_input = gr.Textbox(
-                    label="✍️ Raw Text Input - Paste articles, notes, or any text content", 
-                    placeholder="Paste your text content here for analysis...",
-                    lines=6
-                )
-            
-            with gr.Column(scale=1):
+    # Main input area
+    with gr.Row():
+        with gr.Column():
+            with gr.Group(elem_classes=["input-container"]):
+                # Document file upload (hidden by default)
                 uploaded_file = gr.File(
-                    label="📄 Document Upload - PDF, Word docs, or text files",
-                    file_types=[".pdf", ".docx", ".txt"]
+                    label="📄 Upload Document (PDF, DOCX, TXT)",
+                    file_types=[".pdf", ".docx", ".txt"],
+                    elem_classes=["file-upload"],
+                    visible=False
                 )
-                video_audio_file = gr.File(
-                    label="🎵 Audio/Video File - Upload for transcription",
-                    file_types=[".mp3", ".mp4", ".wav", ".m4a"]
+                
+                # Audio file upload (hidden by default)  
+                audio_file = gr.File(
+                    label="🎵 Upload Audio/Video File (MP3, MP4, WAV, M4A)",
+                    file_types=[".mp3", ".mp4", ".wav", ".m4a"],
+                    elem_classes=["file-upload"],
+                    visible=False
                 )
-        
-        # Model and depth selection with process button
-        with gr.Row():
-            with gr.Column(scale=1):
-                summary_model = gr.Dropdown(
-                    choices=summary_model_choices, 
-                    value="gpt-3.5-turbo", 
-                    label="🤖 AI Model - Choose processing model"
-                )
-            with gr.Column(scale=1):
-                summary_depth = gr.Dropdown(
-                    choices=summary_depth_choices,
-                    value="Balanced Summary",
-                    label="📊 Summary Depth - Choose detail level"
-                )
-            with gr.Column(scale=1):
-                process_button = gr.Button(
-                    "🚀 Process Content", 
-                    elem_classes=["primary-button"],
-                    size="lg"
+                
+                # Text input (visible by default)
+                raw_text_input = gr.Textbox(
+                    label="",
+                    placeholder="Enter your text here for AI analysis and intelligent Q&A...",
+                    lines=12,
+                    max_lines=20,
+                    elem_classes=["main-textarea"],
+                    show_label=False,
+                    visible=True
                 )
     
-    # Processing Status
+    # Settings section
     with gr.Row():
-        status_display = gr.HTML('<div class="status-indicator status-ready">✅ Ready to process content</div>')
+        with gr.Column():
+            with gr.Group(elem_classes=["settings-section"]):
+                gr.HTML('<div class="settings-title">⚙️ AI Configuration</div>')
+                with gr.Row():
+                    with gr.Column(scale=1):
+                        summary_model = gr.Dropdown(
+                            choices=summary_model_choices,
+                            value="gpt-3.5-turbo",
+                            label="🤖 AI Model"
+                        )
+                    with gr.Column(scale=1):
+                        summary_depth = gr.Dropdown(
+                            choices=summary_depth_choices,
+                            value="Balanced Summary",
+                            label="📊 Analysis Depth"
+                        )
     
-    # Summary Output (Secondary)
-    with gr.Group():
-        with gr.Row():
-            gr.HTML('<div class="section-title">📋 Content Summary</div>')
-        
-        with gr.Row():
-            with gr.Column(scale=2):
+    # Process button
+    with gr.Row():
+        process_button = gr.Button(
+            "🚀 Analyze Content",
+            elem_classes=["primary-button"],
+            size="lg"
+        )
+    
+    # Progress indicator
+    with gr.Row(visible=False) as progress_row:
+        with gr.Column():
+            progress_html = gr.HTML()
+    
+    # Status indicator
+    with gr.Row():
+        status_output = gr.HTML(
+            value='<div class="status-indicator">Ready to process your content</div>',
+            visible=True
+        )
+    
+    # Summary output (hidden by default)
+    with gr.Row(visible=False) as summary_section:
+        with gr.Column():
+            with gr.Group(elem_classes=["output-section"]):
+                gr.HTML('<div class="section-title">📋 Content Summary</div>')
                 summary_output = gr.Textbox(
-                    label="📝 AI-Generated Summary", 
-                    lines=6,
-                    placeholder="A concise summary of your content will appear here...",
-                    elem_classes=["summary-card"]
+                    label="",
+                    lines=8,
+                    elem_classes=["summary-text"],
+                    show_label=False,
+                    interactive=False,
+                    placeholder="Your AI-generated summary will appear here..."
                 )
-            with gr.Column(scale=1):
+                
+                # Audio status indicator for summary
+                summary_audio_status = gr.HTML(
+                    value='<div class="status-indicator audio-generating" style="display: none;"><div class="spinner"></div>Generating audio...</div>',
+                    visible=False
+                )
+                
                 audio_output = gr.Audio(
-                    label="🔊 Summary Audio - Listen to your summary",
+                    label="🔊 Listen to Summary",
                     autoplay=False
                 )
     
-    # Q&A Section (Primary Focus)
-    with gr.Group():
-        with gr.Row():
-            gr.HTML("""
-                <div class="qa-highlight">
-                    <div class="qa-title">💬 Smart Q&A with AI Agent</div>
-                    <div class="qa-subtitle">Ask questions and get intelligent responses with follow-up suggestions!</div>
+    # Q&A Section (hidden by default)
+    with gr.Row(visible=False) as qa_section:
+        with gr.Column():
+            with gr.Group(elem_classes=["output-section"]):
+                gr.HTML('<div class="section-title">💬 Smart Q&A Assistant</div>')
+                
+                with gr.Row():
+                    with gr.Column(scale=3):
+                        question_text = gr.Textbox(
+                            label="",
+                            placeholder="Ask anything about your content...",
+                            lines=2,
+                            elem_classes=["question-input"],
+                            show_label=False
+                        )
+                    with gr.Column(scale=1):
+                        question_audio = gr.Audio(
+                            label="🎤 Voice Question",
+                            type="filepath",
+                            elem_classes=["audio-container"]
+                        )
+                
+                ask_button = gr.Button(
+                    "🤖 Get AI Answer",
+                    elem_classes=["primary-button"]
+                )
+                
+                # Q&A Progress indicator
+                with gr.Row(visible=False) as qa_progress_row:
+                    with gr.Column():
+                        qa_progress_html = gr.HTML()
+                
+                answer_output = gr.Textbox(
+                    label="",
+                    lines=8,
+                    elem_classes=["summary-text"],
+                    show_label=False,
+                    interactive=False,
+                    placeholder="Your intelligent AI answer will appear here..."
+                )
+                
+                # Audio status indicator for Q&A
+                answer_audio_status = gr.HTML(
+                    value='<div class="status-indicator audio-generating" style="display: none;"><div class="spinner"></div>Generating audio...</div>',
+                    visible=False
+                )
+                
+                answer_audio_output = gr.Audio(
+                    label="🔊 Listen to Answer",
+                    autoplay=False
+                )
+    
+    # Hidden components for compatibility
+    full_text_output = gr.Textbox(visible=False)
+    youtube_url = gr.Textbox(value="", visible=False)
+    
+    # Audio transcription function
+    def transcribe_question_audio(audio_path):
+        """Transcribe audio and update text box immediately"""
+        if audio_path is None:
+            return ""
+        
+        try:
+            transcribed_text = transcribe_audio(audio_path)
+            return transcribed_text
+        except Exception as e:
+            print(f"Transcription error: {e}")
+            return ""
+    
+    # Tab switching functions
+    def show_document_tab():
+        return (
+            gr.update(visible=True),   # uploaded_file
+            gr.update(visible=False),  # audio_file  
+            gr.update(visible=False),  # raw_text_input
+            gr.update(elem_classes=["tab-button", "selected"]),  # tab_document_btn
+            gr.update(elem_classes=["tab-button"]),              # tab_audio_btn
+            gr.update(elem_classes=["tab-button"])               # tab_text_btn
+        )
+    
+    def show_audio_tab():
+        return (
+            gr.update(visible=False),  # uploaded_file
+            gr.update(visible=True),   # audio_file
+            gr.update(visible=False),  # raw_text_input
+            gr.update(elem_classes=["tab-button"]),              # tab_document_btn
+            gr.update(elem_classes=["tab-button", "selected"]),  # tab_audio_btn
+            gr.update(elem_classes=["tab-button"])               # tab_text_btn
+        )
+    
+    def show_text_tab():
+        return (
+            gr.update(visible=False),  # uploaded_file
+            gr.update(visible=False),  # audio_file
+            gr.update(visible=True),   # raw_text_input
+            gr.update(elem_classes=["tab-button"]),              # tab_document_btn
+            gr.update(elem_classes=["tab-button"]),              # tab_audio_btn
+            gr.update(elem_classes=["tab-button", "selected"])   # tab_text_btn
+        )
+    
+    # Event handlers for tabs
+    tab_document_btn.click(
+        fn=show_document_tab,
+        outputs=[uploaded_file, audio_file, raw_text_input, tab_document_btn, tab_audio_btn, tab_text_btn]
+    )
+    
+    tab_audio_btn.click(
+        fn=show_audio_tab,
+        outputs=[uploaded_file, audio_file, raw_text_input, tab_document_btn, tab_audio_btn, tab_text_btn]
+    )
+    
+    tab_text_btn.click(
+        fn=show_text_tab,
+        outputs=[uploaded_file, audio_file, raw_text_input, tab_document_btn, tab_audio_btn, tab_text_btn]
+    )
+    
+    # Audio transcription handler - updates text immediately
+    question_audio.change(
+        fn=transcribe_question_audio,
+        inputs=[question_audio],
+        outputs=[question_text]
+    )
+    
+    # Processing function with decoupled text/audio
+    def process_content_decoupled(youtube_url_val, uploaded_file_val, audio_file_val, raw_text_val, model, depth):
+        """Process content with immediate text display and background audio generation"""
+        
+        # Show initial progress
+        yield (
+            gr.update(visible=True),  # progress_row
+            '''<div class="progress-container">
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 10%;"></div>
                 </div>
-            """)
+                <div class="progress-text">
+                    <div class="spinner"></div>
+                    Starting content processing...
+                </div>
+            </div>''',
+            '<div class="status-indicator processing">🔄 Processing...</div>',
+            "",  # summary_output
+            gr.update(visible=False),  # summary_audio_status
+            None,  # audio_output
+            "",   # full_text_output
+            False,  # content_processed
+            gr.update(visible=False),  # summary_section
+            gr.update(visible=False)   # qa_section
+        )
         
-        with gr.Row():
-            with gr.Column(scale=3):
-                question_text = gr.Textbox(
-                    label="❓ What would you like to know? - AI agent will help clarify and improve your questions",
-                    placeholder="Ask anything about your uploaded content...",
-                    lines=3
-                )
-            with gr.Column(scale=1):
-                question_audio = gr.Audio(
-                    label="🎤 Voice Question - Or ask by voice",
-                    type="filepath"
-                )
+        # Simulate progress steps
+        progress_steps = [
+            (25, "Extracting and cleaning content..."),
+            (45, "Building semantic knowledge base..."),
+            (65, "Generating AI summary..."),
+        ]
         
-        with gr.Row():
-            ask_button = gr.Button(
-                "🤖 Get Smart AI Answer", 
-                elem_classes=["primary-button"],
-                size="lg"
+        for i, (progress, message) in enumerate(progress_steps):
+            time.sleep(0.6)  # Reduced time for faster feedback
+            
+            progress_html = f'''<div class="progress-container">
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: {progress}%;"></div>
+                </div>
+                <div class="progress-text">
+                    <div class="spinner"></div>
+                    {message}
+                </div>
+            </div>'''
+            
+            yield (
+                gr.update(visible=True),  # progress_row
+                progress_html,
+                '<div class="status-indicator processing">🔄 Processing...</div>',
+                "",  # summary_output
+                gr.update(visible=False),  # summary_audio_status
+                None,  # audio_output
+                "",   # full_text_output
+                False,  # content_processed
+                gr.update(visible=False),  # summary_section
+                gr.update(visible=False)   # qa_section
             )
         
-        with gr.Row():
-            with gr.Column(scale=2):
-                answer_output = gr.Textbox(
-                    label="🤖 Smart AI Answer - Enhanced with suggestions and follow-ups",
-                    lines=10,
-                    placeholder="Your AI-powered answer with smart suggestions will appear here...",
-                    elem_classes=["answer-card"]
-                )
-            with gr.Column(scale=1):
-                answer_audio_output = gr.Audio(
-                    label="🔊 Answer Audio - Listen to the answer",
-                    autoplay=False
-                )
-    
-    # Quick Example Questions
-    with gr.Group():
-        with gr.Row():
-            gr.HTML('<div class="section-title">💡 Example Questions</div>')
-        
-        with gr.Row():
-            example_buttons = []
-            example_questions = [
-                "What are the main points?",
-                "Can you explain this in simple terms?", 
-                "What are the key takeaways?",
-                "How does this relate to...?"
-            ]
+        try:
+            # Get text content first (without audio)
+            summary, _, full_text, status = handle_input(
+                youtube_url_val, uploaded_file_val, audio_file_val, raw_text_val, model, depth
+            )
             
-            for question in example_questions:
-                btn = gr.Button(
-                    question, 
-                    elem_classes=["secondary-button"],
-                    size="sm"
+            # Show text immediately
+            if summary and "Error" not in summary and "Please upload" not in summary:
+                yield (
+                    gr.update(visible=False),  # progress_row
+                    "",  # progress_html
+                    '<div class="status-indicator success">✅ Content processed! Generating audio...</div>',
+                    summary,  # summary_output
+                    gr.update(visible=True),  # summary_audio_status
+                    None,  # audio_output (still empty)
+                    full_text,   # full_text_output
+                    True,  # content_processed
+                    gr.update(visible=True),   # summary_section
+                    gr.update(visible=True)    # qa_section
                 )
-                example_buttons.append(btn)
+                
+                # Generate audio in background
+                try:
+                    audio_summary = text_to_speech(summary)
+                    # Update with audio when ready
+                    yield (
+                        gr.update(visible=False),  # progress_row
+                        "",  # progress_html
+                        '<div class="status-indicator success">✅ Content processed successfully! Ready for Q&A.</div>',
+                        summary,  # summary_output
+                        gr.update(visible=False),  # summary_audio_status
+                        audio_summary,  # audio_output
+                        full_text,   # full_text_output
+                        True,  # content_processed
+                        gr.update(visible=True),   # summary_section
+                        gr.update(visible=True)    # qa_section
+                    )
+                except Exception as audio_error:
+                    print(f"Audio generation failed: {audio_error}")
+                    # Continue without audio
+                    yield (
+                        gr.update(visible=False),  # progress_row
+                        "",  # progress_html
+                        '<div class="status-indicator success">✅ Content processed successfully! (Audio generation failed)</div>',
+                        summary,  # summary_output
+                        gr.update(visible=False),  # summary_audio_status
+                        None,  # audio_output
+                        full_text,   # full_text_output
+                        True,  # content_processed
+                        gr.update(visible=True),   # summary_section
+                        gr.update(visible=True)    # qa_section
+                    )
+            else:
+                yield (
+                    gr.update(visible=False),  # progress_row
+                    "",  # progress_html
+                    '<div class="status-indicator error">❌ Please provide valid content to analyze.</div>',
+                    summary or "Please provide content to analyze.",  # summary_output
+                    gr.update(visible=False),  # summary_audio_status
+                    None,  # audio_output
+                    "",   # full_text_output
+                    False,  # content_processed
+                    gr.update(visible=False),  # summary_section
+                    gr.update(visible=False)   # qa_section
+                )
+                
+        except Exception as e:
+            yield (
+                gr.update(visible=False),  # progress_row
+                "",  # progress_html
+                f'<div class="status-indicator error">❌ Processing failed: {str(e)}</div>',
+                f"Error processing content: {str(e)}",  # summary_output
+                gr.update(visible=False),  # summary_audio_status
+                None,  # audio_output
+                "",   # full_text_output
+                False,  # content_processed
+                gr.update(visible=False),  # summary_section
+                gr.update(visible=False)   # qa_section
+            )
     
-    # Hidden field for full text
-    full_text_output = gr.Textbox(visible=False)
-    
-    # Event handlers
-    def update_status_processing():
-        return '<div class="status-indicator status-processing">⏳ Processing your content...</div>'
-    
-    def update_status_ready():
-        return '<div class="status-indicator status-ready">✅ Content processed! Ready for questions.</div>'
-    
-    # Ask questions with proper input handling
-    def process_question_and_clear(question_text_input, audio_input, model):
-        # Debug what we're getting
-        print(f"MAIN DEBUG - Received question_text_input: '{question_text_input}' (type: {type(question_text_input)})")
-        print(f"MAIN DEBUG - Received audio_input: '{audio_input}' (type: {type(audio_input)})")
+    # Q&A function with decoupled text/audio
+    def answer_question_decoupled(question_text_val, audio_path_val, model, is_processed):
+        """Answer questions with immediate text display and background audio generation"""
+        if not is_processed:
+            return (
+                question_text_val, 
+                "Please process some content first before asking questions.", 
+                gr.update(visible=False),  # answer_audio_status
+                None,  # answer_audio_output
+                gr.update(visible=False),  # qa_progress_row
+                ""
+            )
         
-        # Get the answer - this handles both text and audio input
-        processed_question, answer, audio_response = answer_question(question_text_input, audio_input, model)
+        # Show Q&A progress
+        qa_steps = [
+            "Analyzing question context...",
+            "Retrieving relevant information...", 
+            "Generating intelligent response..."
+        ]
         
-        # Return the processed question (for display), answer, and audio
-        return processed_question, answer, audio_response
+        for i, step in enumerate(qa_steps):
+            progress = int((i + 1) / len(qa_steps) * 100)
+            progress_html = f'''<div class="progress-container">
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: {progress}%;"></div>
+                </div>
+                <div class="progress-text">
+                    <div class="spinner"></div>
+                    {step}
+                </div>
+            </div>'''
+            
+            yield (
+                question_text_val,
+                "",  # answer_output
+                gr.update(visible=False),  # answer_audio_status
+                None,  # answer_audio_output
+                gr.update(visible=True),  # qa_progress_row
+                progress_html
+            )
+            time.sleep(0.5)  # Reduced time for faster feedback
+        
+        try:
+            # Get text answer first (without audio)
+            processed_question, answer, _ = answer_question(question_text_val, audio_path_val, model)
+            
+            # Show text immediately
+            yield (
+                processed_question, 
+                answer, 
+                gr.update(visible=True),  # answer_audio_status
+                None,  # answer_audio_output (still empty)
+                gr.update(visible=False),  # qa_progress_row
+                ""
+            )
+            
+            # Generate audio in background
+            try:
+                audio_response = text_to_speech(answer)
+                # Update with audio when ready
+                yield (
+                    processed_question, 
+                    answer, 
+                    gr.update(visible=False),  # answer_audio_status
+                    audio_response,  # answer_audio_output
+                    gr.update(visible=False),  # qa_progress_row
+                    ""
+                )
+            except Exception as audio_error:
+                print(f"Audio generation failed: {audio_error}")
+                # Continue without audio
+                yield (
+                    processed_question, 
+                    answer, 
+                    gr.update(visible=False),  # answer_audio_status
+                    None,  # answer_audio_output
+                    gr.update(visible=False),  # qa_progress_row
+                    ""
+                )
+            
+        except Exception as e:
+            yield (
+                question_text_val, 
+                f"Error generating answer: {str(e)}", 
+                gr.update(visible=False),  # answer_audio_status
+                None,  # answer_audio_output
+                gr.update(visible=False),  # qa_progress_row
+                ""
+            )
     
-    # Process content
+    # Process content event with decoupled text/audio
     process_button.click(
-        fn=update_status_processing,
-        outputs=[status_display]
-    ).then(
-        fn=handle_input,
-        inputs=[youtube_url, uploaded_file, video_audio_file, raw_text_input, summary_model, summary_depth],
-        outputs=[summary_output, audio_output, full_text_output, gr.Textbox(visible=False)],
-    ).then(
-        fn=update_status_ready,
-        outputs=[status_display]
-    )
-
-    # Ask questions
-    ask_button.click(
-        fn=process_question_and_clear,
-        inputs=[question_text, question_audio, summary_model],
-        outputs=[question_text, answer_output, answer_audio_output],
+        fn=process_content_decoupled,
+        inputs=[youtube_url, uploaded_file, audio_file, raw_text_input, summary_model, summary_depth],
+        outputs=[progress_row, progress_html, status_output, summary_output, summary_audio_status, audio_output, full_text_output, content_processed, summary_section, qa_section]
     )
     
-    # Example question handlers
-    for i, btn in enumerate(example_buttons):
-        btn.click(
-            fn=lambda q=example_questions[i]: q,
-            outputs=[question_text]
-        )
+    # Ask questions event with decoupled text/audio
+    ask_button.click(
+        fn=answer_question_decoupled,
+        inputs=[question_text, question_audio, summary_model, content_processed],
+        outputs=[question_text, answer_output, answer_audio_status, answer_audio_output, qa_progress_row, qa_progress_html]
+    )
 
 if __name__ == "__main__":
     demo.launch(server_name="0.0.0.0", server_port=7860)

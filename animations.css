@@ -1,0 +1,156 @@
+/* Animations and Effects */
+
+/* Keyframe Animations */
+@keyframes pulse {
+    0%, 100% { transform: scale(1) rotate(0deg); opacity: 0.6; }
+    50% { transform: scale(1.15) rotate(180deg); opacity: 0.2; }
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-8px); }
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@keyframes progress-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+@keyframes pulse-recording {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.7; transform: scale(1.05); }
+}
+
+/* Progress Indicators */
+.progress-container {
+    background: linear-gradient(135deg, rgba(30,30,60,0.9) 0%, rgba(40,40,80,0.8) 100%) !important;
+    border: 1px solid rgba(99, 102, 241, 0.4) !important;
+    border-radius: 16px !important;
+    padding: 1.5rem !important;
+    margin: 1rem 0 !important;
+    backdrop-filter: blur(20px) !important;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.3) !important;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 6px;
+    background: rgba(30,30,60,0.8);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
+    border-radius: 3px;
+    animation: progress-pulse 2s ease-in-out infinite;
+    transition: width 0.3s ease;
+}
+
+.progress-text {
+    color: rgba(255,255,255,0.9);
+    font-size: 0.9rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(99, 102, 241, 0.3);
+    border-top: 2px solid #6366f1;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+/* Status Indicators */
+.status-indicator {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    padding: 1rem 1.5rem !important;
+    background: linear-gradient(135deg, rgba(30,30,60,0.9) 0%, rgba(40,40,80,0.8) 100%) !important;
+    border: 1px solid rgba(99, 102, 241, 0.4) !important;
+    border-radius: 12px !important;
+    color: rgba(255,255,255,0.9) !important;
+    font-weight: 500 !important;
+    margin-top: 1rem !important;
+    backdrop-filter: blur(20px) !important;
+}
+
+.status-indicator.success {
+    border-color: rgba(34, 197, 94, 0.4) !important;
+    background: linear-gradient(135deg, rgba(20,60,30,0.9) 0%, rgba(30,80,40,0.8) 100%) !important;
+}
+
+.status-indicator.error {
+    border-color: rgba(239, 68, 68, 0.4) !important;
+    background: linear-gradient(135deg, rgba(60,20,30,0.9) 0%, rgba(80,30,40,0.8) 100%) !important;
+}
+
+.status-indicator.processing {
+    border-color: rgba(251, 191, 36, 0.4) !important;
+    background: linear-gradient(135deg, rgba(60,50,20,0.9) 0%, rgba(80,70,30,0.8) 100%) !important;
+}
+
+.status-indicator.audio-generating {
+    border-color: rgba(139, 92, 246, 0.4) !important;
+    background: linear-gradient(135deg, rgba(40,30,60,0.9) 0%, rgba(50,40,80,0.8) 100%) !important;
+}
+
+/* Hover Effects */
+.tab-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+    transition: left 0.5s;
+}
+
+.tab-button:hover::before {
+    left: 100%;
+}
+
+.primary-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.6s;
+}
+
+.primary-button:hover::before {
+    left: 100%;
+}
+
+.file-upload::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: radial-gradient(circle, rgba(99, 102, 241, 0.1) 0%, transparent 70%);
+    transition: all 0.4s ease;
+    transform: translate(-50%, -50%);
+}
+
+.file-upload:hover::before {
+    width: 200%;
+    height: 200%;
+}
